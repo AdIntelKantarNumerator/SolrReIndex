@@ -23,15 +23,12 @@ import java.util.stream.Collectors;
 public class SolrIndex {
     Logger logger = LoggerFactory.getLogger(SolrIndex.class);
 
-    private String sourceUrl = "http://localhost:8983/solr/mynewtest6/";
-    private String destinationUrl = "http://localhost:8983/solr/mynewtest13/";
-    private int batchSize = 1000;
-    private int threadCount = 20;
-    private String startTime = "2022-03-16T10:56:10.342Z";
-    private String endTime = "2022-03-17T10:56:10.342Z";
-
-    public SolrIndex() {
-    }
+    private final String sourceUrl;
+    private final String destinationUrl;
+    private final int batchSize;
+    private final int threadCount;
+    private final String startTime;
+    private final String endTime;
 
     public SolrIndex(String sourceUrl, String destinationUrl, int batchSize, int threadCount, String startTime, String endTime) {
         this.sourceUrl = sourceUrl;
@@ -85,7 +82,7 @@ public class SolrIndex {
             logger.info("Done!");
 
         } catch (SolrServerException | IOException e) {
-            logger.error("Error starting SolrIndex", e);
+            logger.error("Error starting SolrIndex {}", e.getMessage());
         }
     }
 
@@ -124,7 +121,7 @@ public class SolrIndex {
                     logger.info("Processed batch " + start + "-" + (start + rows - 1));
 
                 } catch (SolrServerException | IOException e) {
-                    logger.info("error processing job " + start + "-" + (start + rows - 1));
+                    logger.info("error processing job " + start + "-" + (start + rows - 1) + " " + e.getMessage());
                     List<Integer> list = new ArrayList<>();
                     list.add(start);
                     list.add(rows);
