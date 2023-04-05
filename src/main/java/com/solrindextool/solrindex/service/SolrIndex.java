@@ -27,16 +27,29 @@ public class SolrIndex {
     private final String destinationUrl;
     private final int batchSize;
     private final int threadCount;
-    private final String startTime;
-    private final String endTime;
+    private String startTime;
+    private String endTime;
+    private String customQuery;
+    private boolean isCustomQuery;
 
-    public SolrIndex(String sourceUrl, String destinationUrl, int batchSize, int threadCount, String startTime, String endTime) {
-        this.sourceUrl = sourceUrl;
-        this.destinationUrl = destinationUrl;
+    public SolrIndex(String sourceURL, String destinationURL, int batchSize, int threadCount,
+                     String startTime, String endTime, boolean isCustomQuery) {
+        this.sourceUrl = sourceURL;
+        this.destinationUrl = destinationURL;
         this.batchSize = batchSize;
         this.threadCount = threadCount;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.isCustomQuery = isCustomQuery;
+    }
+
+    public SolrIndex(String sourceURL, String destinationURL, int batchSize, int threadCount, boolean isCustomQuery, String customQuery) {
+        this.sourceUrl = sourceURL;
+        this.destinationUrl = destinationURL;
+        this.batchSize = batchSize;
+        this.threadCount = threadCount;
+        this.isCustomQuery = isCustomQuery;
+        this.customQuery = customQuery;
     }
 
     public void copy() {
@@ -51,7 +64,28 @@ public class SolrIndex {
 
             // Query Solr for documents to copy
             SolrQuery query = new SolrQuery();
-            query.setQuery("*:*").addFilterQuery("timestamp:[" + startTime + " TO " + endTime + "]");;
+            if (isCustomQuery){
+                String url = customQuery;
+                // Get the query and filter query parameters from the URL
+                String queryString = url.substring(url.indexOf("?") + 1);
+                String[] queryParams = queryString.split("&");
+
+                // Create a SolrQuery object and set the query and filter query parameters
+                for (String queryParam : queryParams) {
+                    String[] paramParts = queryParam.split("=");
+                    String paramName = paramParts[0];
+                    String paramValue = paramParts[1];
+                    if (paramName.equals("q")) {
+                        query.setQuery(paramValue);
+                    } else if (paramName.equals("fq")) {
+                        query.addFilterQuery(paramValue);
+                    }
+                }
+            }
+            else {
+                query.setQuery("*:*").addFilterQuery("first_run_date:[" + startTime + " TO " + endTime + "]");
+            }
+
             long totalCount = source.query(query).getResults().getNumFound();
             logger.info("Documents found: " + totalCount);
 
