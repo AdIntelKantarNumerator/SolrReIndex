@@ -1,0 +1,54 @@
+.svnignore
+
+maven-node/
+
+/target/**
+/*/target/**
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+*.war
+*.ear
+*.class
+
+# eclipse specific git ignore
+*.pydevproject
+.project
+.metadata
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.classpath
+.settings/
+.loadpath
+.springBeans
+spy.log
+
+# TSD Config File
+.tsdrc
+
+# Storm IDE specific ignore
+.idea
+*.iml
+
+# External tool builders
+.externalToolBuilders/
+
+# Locally stored "Eclipse launch configurations"
+*.launch
+
+# Mac file cruft
+.DS_Store
+
+# Grunt work on the site
+npm-debug.log*
+competitrack-site/dist
+competitrack-export-server/node
+competitrack-metadata-server/node
+artifacts/
+
+# Eclipse annotation processing code turd
+.factorypath
