@@ -143,7 +143,7 @@ public class SolrIndex {
                     List<SolrInputDocument> inputDocs = documents.parallelStream().map(doc -> {
                         SolrInputDocument inputDoc = new SolrInputDocument();
                         doc.getFieldNames().forEach(fieldName -> {
-                            if (!fieldName.equals("_version_")) {
+                            if (!fieldName.equals("_version_") && !fieldName.equals("timestamp")) {
                                 inputDoc.addField(fieldName, doc.getFieldValue(fieldName));
                             }
                         });
