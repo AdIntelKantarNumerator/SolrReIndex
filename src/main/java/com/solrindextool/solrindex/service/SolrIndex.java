@@ -95,17 +95,8 @@ public class SolrIndex {
             // Start the transfer process
             Map<Integer,List> errorMap = start(source,destination,totalCount,query,executor);
 
-            // Wait for all batches to finish processing
-            executor.shutdown();
-            while (!executor.isTerminated()) {
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    logger.error("Interrupted while waiting for batches to complete", e);
-                }
-            }
             if (!errorMap.isEmpty()){
-                logger.info("Error processing batches: "+errorMap.toString());
+                logger.info("Error processing batches: "+ errorMap);
             }
             final long duration = stopwatch.elapsed(TimeUnit.MILLISECONDS);
             logger.info("time spend: "+duration);
@@ -163,6 +154,16 @@ public class SolrIndex {
                     key[0]++;
                 }
             });
+        }
+
+        // Wait for all batches to finish processing
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                logger.error("Interrupted while waiting for batches to complete", e);
+            }
         }
         return errorMap;
     }
