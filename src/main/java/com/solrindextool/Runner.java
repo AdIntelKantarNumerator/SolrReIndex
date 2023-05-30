@@ -190,7 +190,7 @@ public class Runner {
 
                 // Query Solr for documents to copy
                 SolrQuery query = new SolrQuery("*:*");
-                query.addFilterQuery("first_run_date:[" + startTime + " TO " + endTime + "]");
+                query.addFilterQuery("timestamp:[" + startTime + " TO " + endTime + "]");
 
                 long totalCount = source.query(query).getResults().getNumFound();
                 System.out.println("Documents found for collection " + collection + ": " + totalCount);
