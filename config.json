@@ -2,11 +2,12 @@
   "custom" : false,
   "collectionRunner" : true,
   "customQuery" : "",
-  "sourcePort" :"http://10.100.50.140:38201/solr",
-  "destinationPort" : "http://localhost:8983/",
+  "sourcePort" :"http://10.100.50.140:38201/solr/",
+  "destinationPort" : "http://localhost:8983/solr/",
   "batchSize" : 200,
   "threadCount" : 10,
   "startTimestamp" : "2023-01-01T05:00:00.000Z",
   "endTimestamp" : "2023-01-01T05:00:00.000Z",
-  "collections" : ["brand-c_v2_1_occurrence","brand-c_v2_1_ad"]
+  "collections" : ["brand-c_v2_1_ad","val2"],
+  "note" : "for collectionRunner source port and destination ports will not include collection names in them"
 }
