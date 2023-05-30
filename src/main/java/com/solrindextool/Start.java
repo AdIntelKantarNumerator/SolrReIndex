@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+
 @SpringBootApplication
 public class Start {
     static boolean custom;
