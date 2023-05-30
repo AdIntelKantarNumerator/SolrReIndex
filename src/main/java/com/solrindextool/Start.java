@@ -26,7 +26,7 @@ public class Start {
         Config config;
 
         try {
-            config = gson.fromJson(new FileReader("config.json"), Config.class);
+            config = gson.fromJson(new FileReader(args[0]), Config.class);
             custom = config.custom;
             collectionRunner = config.collectionRunner;
             customQuery=config.customQuery;
