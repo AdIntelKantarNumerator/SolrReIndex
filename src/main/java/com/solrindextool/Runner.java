@@ -1,4 +1,4 @@
-package com.solrindextool.solrindex.service;
+package com.solrindextool;
 
 import com.google.common.base.Stopwatch;
 import org.apache.solr.client.solrj.SolrClient;
@@ -7,8 +7,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,8 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-public class SolrIndex {
-    Logger logger = LoggerFactory.getLogger(SolrIndex.class);
+public class Runner {
 
     private final String sourceUrl;
     private final String destinationUrl;
@@ -31,9 +29,10 @@ public class SolrIndex {
     private String endTime;
     private String customQuery;
     private boolean isCustomQuery;
+    private String[] collections;
 
-    public SolrIndex(String sourceURL, String destinationURL, int batchSize, int threadCount,
-                     String startTime, String endTime, boolean isCustomQuery) {
+    public Runner(String sourceURL, String destinationURL, int batchSize, int threadCount,
+                  String startTime, String endTime, boolean isCustomQuery) {
         this.sourceUrl = sourceURL;
         this.destinationUrl = destinationURL;
         this.batchSize = batchSize;
@@ -43,7 +42,7 @@ public class SolrIndex {
         this.isCustomQuery = isCustomQuery;
     }
 
-    public SolrIndex(String sourceURL, String destinationURL, int batchSize, int threadCount, boolean isCustomQuery, String customQuery) {
+    public Runner(String sourceURL, String destinationURL, int batchSize, int threadCount, boolean isCustomQuery, String customQuery) {
         this.sourceUrl = sourceURL;
         this.destinationUrl = destinationURL;
         this.batchSize = batchSize;
@@ -52,15 +51,25 @@ public class SolrIndex {
         this.customQuery = customQuery;
     }
 
+    public Runner(String sourceUrl, String destinationUrl, int batchSize, int threadCount, String[] collections, String startTime, String endTime) {
+        this.sourceUrl = sourceUrl;
+        this.destinationUrl = destinationUrl;
+        this.batchSize = batchSize;
+        this.threadCount = threadCount;
+        this.collections = collections;
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
+
     public void copy() {
 
         try {
-            logger.info("Application started");
+            System.out.println("Application started");
 
             // Initialize Solr clients for source and destination
             SolrClient source = new HttpSolrClient.Builder(sourceUrl).build();
             SolrClient destination = new HttpSolrClient.Builder(destinationUrl).build();
-            logger.info("Solr clients initialized for source and destination");
+            System.out.println("Solr clients initialized for source and destination");
 
             // Query Solr for documents to copy
             SolrQuery query = new SolrQuery();
@@ -87,7 +96,7 @@ public class SolrIndex {
             }
 
             long totalCount = source.query(query).getResults().getNumFound();
-            logger.info("Documents found: " + totalCount);
+            System.out.println("Documents found: " + totalCount);
 
             final Stopwatch stopwatch = Stopwatch.createStarted();
             ExecutorService executor = Executors.newFixedThreadPool(threadCount);
@@ -96,18 +105,18 @@ public class SolrIndex {
             Map<Integer,List> errorMap = start(source,destination,totalCount,query,executor);
 
             if (!errorMap.isEmpty()){
-                logger.info("Error processing batches: "+ errorMap);
+                System.out.println("Error processing batches: "+ errorMap);
             }
             final long duration = stopwatch.elapsed(TimeUnit.MILLISECONDS);
-            logger.info("time spend: "+duration);
+            System.out.println("time spend: "+duration);
 
             // Close Solr clients
             source.close();
             destination.close();
-            logger.info("Done!");
+            System.out.println("Done!");
 
         } catch (SolrServerException | IOException e) {
-            logger.error("Error starting SolrIndex {}", e.getMessage());
+            System.out.println("Error starting application");
         }
     }
 
@@ -118,7 +127,7 @@ public class SolrIndex {
         for (int i = 0; i < totalCount; i += batchSize) {
             int start = i;
             int rows = Math.min(batchSize, (int) (totalCount - start));
-            logger.info("starting new batch " + start + "-" + (start + rows - 1));
+            System.out.println("starting new batch " + start + "-" + (start + rows - 1));
 
             executor.execute(() -> {
                 // Query Solr for a batch of documents
@@ -128,7 +137,7 @@ public class SolrIndex {
                 SolrDocumentList documents = null;
                 try {
                     documents = source.query(batchQuery).getResults();
-                    logger.info("successfully queried batch " + start + "-" + (start + rows - 1));
+                    System.out.println("successfully queried batch " + start + "-" + (start + rows - 1));
 
                     // Convert SolrDocumentList to List<SolrInputDocument>
                     List<SolrInputDocument> inputDocs = documents.parallelStream().map(doc -> {
@@ -143,10 +152,10 @@ public class SolrIndex {
 
                     destination.add(inputDocs);
                     destination.commit();
-                    logger.info("Processed batch " + start + "-" + (start + rows - 1));
+                    System.out.println("Processed batch " + start + "-" + (start + rows - 1));
 
                 } catch (SolrServerException | IOException e) {
-                    logger.info("error processing job " + start + "-" + (start + rows - 1) + " " + e.getMessage());
+                    System.out.println("error processing job " + start + "-" + (start + rows - 1) + " " + e.getMessage());
                     List<Integer> list = new ArrayList<>();
                     list.add(start);
                     list.add(rows);
@@ -162,10 +171,51 @@ public class SolrIndex {
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
-                logger.error("Interrupted while waiting for batches to complete", e);
+                System.out.println("Interrupted while waiting for batches to complete");
+                e.printStackTrace();
             }
         }
         return errorMap;
     }
+
+    public void transferData() {
+        try {
+            for (String collection : collections) {
+                // Initialize Solr clients for source and destination
+                String sourceCollectionURL = sourceUrl+collection+"/";
+                String destinationCollectionURL = destinationUrl+collection+"/";
+                SolrClient source = new HttpSolrClient.Builder(sourceCollectionURL).build();
+                SolrClient destination = new HttpSolrClient.Builder(destinationCollectionURL).build();
+                System.out.println("Solr clients initialized for source and destination");
+
+                // Query Solr for documents to copy
+                SolrQuery query = new SolrQuery("*:*");
+                query.addFilterQuery("timestamp:[" + startTime + " TO " + endTime + "]");
+
+                long totalCount = source.query(query).getResults().getNumFound();
+                System.out.println("Documents found for collection " + collection + ": " + totalCount);
+                final Stopwatch stopwatch = Stopwatch.createStarted();
+                ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+                // Start the transfer process
+                Map<Integer, List> errorMap = start(source, destination, totalCount, query, executor);
+
+                if (!errorMap.isEmpty()) {
+                    System.out.println("Error processing batches for collection " + collection + ": " + errorMap);
+                }
+                final long duration = stopwatch.elapsed(TimeUnit.MILLISECONDS);
+                System.out.println("Time spend for collection " + collection + ": " + duration + " ms");
+                // Close Solr clients
+                source.close();
+                destination.close();
+            }
+            System.out.println("Done!");
+
+        } catch (SolrServerException | IOException e) {
+            System.out.println("Error occurred");
+            e.printStackTrace();
+        }
+    }
+
 }
 
